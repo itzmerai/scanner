@@ -48,6 +48,7 @@ function App() {
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
       <h1>QR Code Scanner</h1>
+      <h5>By: Ryan Pogi</h5>
 
       {!scanning ? (
         <>
