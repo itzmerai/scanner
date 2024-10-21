@@ -42,13 +42,15 @@ function App() {
 
   // Toggle between front and back camera
   const toggleCamera = () => {
+    // Switch between 'environment' (back camera) and 'user' (front camera)
     setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
+    setScanning(false); // Stop scanning temporarily to re-render QR scanner with new facingMode
+    setTimeout(() => setScanning(true), 100); // Restart scanning after a slight delay
   };
 
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
       <h1>QR Code Scanner</h1>
-      <h5>By: Ryan Pogi</h5>
 
       {!scanning ? (
         <>
