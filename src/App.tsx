@@ -1,18 +1,33 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import QrScanner from 'react-qr-scanner';
 
-function App() {
-  const [qrData, setQrData] = useState(null);
-  const [error, setError] = useState(null);
+// Define the shape of the QR Data
+interface QRData {
+  text: string;
+  rawBytes?: Uint8Array;
+  numBits?: number;
+  resultPoints?: any[];
+  format?: string;
+  timestamp?: number;
+  resultMetadata?: object;
+  canvas?: HTMLCanvasElement;
+}
 
-  const handleScan = (data) => {
+function App() {
+  // Use the QRData type for the state
+  const [qrData, setQrData] = useState<QRData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleScan = (data: QRData | null) => {
     if (data) {
       setQrData(data);  // Store the whole data object
     }
   };
 
-  const handleError = (err) => {
-    setError(err?.message);
+  const handleError = (err: Error | null) => {
+    if (err) {
+      setError(err.message);
+    }
   };
 
   return (
