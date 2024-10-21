@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import QrScanner from 'react-qr-scanner';
 
 // Define the shape of the QR Data
@@ -19,6 +19,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState<boolean>(false); // State to control scanning visibility
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Camera facing mode
+  const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
 
   const handleScan = (data: QRData | null) => {
     if (data) {
@@ -30,6 +31,7 @@ function App() {
   const handleError = (err: Error | null) => {
     if (err) {
       setError(err.message);
+      setScanning(false);
     }
   };
 
@@ -40,13 +42,38 @@ function App() {
     setError(null);  // Clear previous errors
   };
 
+  // Function to request camera access based on the facingMode
+  const getCameraStream = async (desiredFacingMode: 'user' | 'environment') => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: desiredFacingMode }, // Request camera based on facing mode
+      });
+      return stream;
+    } catch (err) {
+      console.error('Error accessing camera: ', err);
+      setError('Camera not available.');
+      setCameraAvailable(false);
+      return null;
+    }
+  };
+
   // Toggle between front and back camera
   const toggleCamera = () => {
     // Switch between 'environment' (back camera) and 'user' (front camera)
     setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
     setScanning(false); // Stop scanning temporarily to re-render QR scanner with new facingMode
-    setTimeout(() => setScanning(true), 100); // Restart scanning after a slight delay
+
+    // Delay before restarting the scanner after toggling
+    setTimeout(() => setScanning(true), 100);
   };
+
+  useEffect(() => {
+    // Check if the browser supports getUserMedia
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError('Camera access not supported in this browser.');
+      setCameraAvailable(false);
+    }
+  }, []);
 
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
@@ -57,9 +84,11 @@ function App() {
           <button onClick={handleStartScan} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
             Start Scan
           </button>
-          <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
-            Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
-          </button>
+          {cameraAvailable && (
+            <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
+              Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
+            </button>
+          )}
         </>
       ) : (
         <div>
@@ -68,12 +97,14 @@ function App() {
             onError={handleError}
             onScan={handleScan}
             style={{ width: '300px' }}
-            facingMode={facingMode}  // Camera facing mode
+            facingMode={facingMode} // Camera facing mode
           />
           <p>Scanning with {facingMode === 'environment' ? 'Back' : 'Front'} Camera...</p>
-          <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
-            Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
-          </button>
+          {cameraAvailable && (
+            <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
+              Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
+            </button>
+          )}
         </div>
       )}
 
