@@ -14,10 +14,11 @@ interface QRData {
 }
 
 function App() {
-  // Use the QRData type for the state
+  // State to store scanned QR code data and error
   const [qrData, setQrData] = useState<QRData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState<boolean>(false); // State to control scanning visibility
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Camera facing mode
 
   const handleScan = (data: QRData | null) => {
     if (data) {
@@ -39,14 +40,24 @@ function App() {
     setError(null);  // Clear previous errors
   };
 
+  // Toggle between front and back camera
+  const toggleCamera = () => {
+    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
+  };
+
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
       <h1>QR Code Scanner</h1>
 
       {!scanning ? (
-        <button onClick={handleStartScan} style={{ padding: '10px 20px', fontSize: '16px' }}>
-          Start Scan
-        </button>
+        <>
+          <button onClick={handleStartScan} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
+            Start Scan
+          </button>
+          <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
+            Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
+          </button>
+        </>
       ) : (
         <div>
           <QrScanner
@@ -54,8 +65,12 @@ function App() {
             onError={handleError}
             onScan={handleScan}
             style={{ width: '300px' }}
+            facingMode={facingMode}  // Camera facing mode
           />
-          <p>Scanning...</p>
+          <p>Scanning with {facingMode === 'environment' ? 'Back' : 'Front'} Camera...</p>
+          <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
+            Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
+          </button>
         </div>
       )}
 
