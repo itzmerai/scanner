@@ -11,21 +11,23 @@ function App() {
   const [qrData, setQrData] = useState<QRData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState<boolean>(false);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Default to 'environment' (back camera)
   const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
   const [switchingCamera, setSwitchingCamera] = useState<boolean>(false); // Flag for camera switching
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Camera mode
 
   const qrScannerRef = useRef<Html5Qrcode | null>(null); // Reference to the scanner instance
+  const qrReaderId = 'qr-reader'; // Define a constant ID for the QR scanner element
 
-  // Function to initialize the QR scanner
-  const initScanner = async () => {
+  // Function to initialize the QR scanner with the selected camera
+  const initScanner = async (selectedFacingMode: 'user' | 'environment') => {
+    setFacingMode(selectedFacingMode); // Set the camera (front or back) based on the selected button
     const config = { fps: 10, qrbox: 250 };
-    const qrScanner = new Html5Qrcode('qr-reader');
+    const qrScanner = new Html5Qrcode(qrReaderId);
     qrScannerRef.current = qrScanner;
 
     try {
       await qrScanner.start(
-        { facingMode }, // Start with the current facing mode
+        { facingMode: selectedFacingMode },
         config,
         qrCodeMessage => {
           setQrData({ text: qrCodeMessage });
@@ -36,6 +38,7 @@ function App() {
           setError(`Scan error: ${err}`);
         }
       );
+      setScanning(true);
     } catch (err) {
       console.error(`Failed to start scanning: ${err}`);
       setError(`Failed to start scanning: ${err}`);
@@ -55,15 +58,7 @@ function App() {
     }
   };
 
-  // Start the scanning process
-  const handleStartScan = async () => {
-    setScanning(true);
-    setQrData(null);
-    setError(null);
-    await initScanner(); // Initialize the scanner
-  };
-
-  // Function to switch between front and back cameras (enabled after scanning starts)
+  // Function to switch between front and back cameras during scanning
   const toggleCamera = async () => {
     if (switchingCamera) return; // Prevent multiple camera switch requests
     setSwitchingCamera(true);
@@ -71,10 +66,8 @@ function App() {
     await stopScanner(); // Ensure the current scanner is stopped
 
     // Toggle between cameras
-    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
-
-    // Reinitialize the scanner with the new camera
-    await initScanner();
+    const newFacingMode = facingMode === 'environment' ? 'user' : 'environment';
+    await initScanner(newFacingMode);
     setSwitchingCamera(false);
   };
 
@@ -95,16 +88,32 @@ function App() {
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
       <h1>QR Code Scanner</h1>
 
+      {/* Render the QR reader container always */}
+      <div id={qrReaderId} style={{ width: '300px', margin: '0 auto', display: scanning ? 'block' : 'none' }} />
+
       {!scanning ? (
         <>
-          <button onClick={handleStartScan} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
-            Start Scan
+          {/* Back Camera Button */}
+          <button
+            onClick={() => initScanner('environment')} // Start scanning with the back camera
+            style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
+          >
+            Start with Back Camera
+          </button>
+
+          {/* Front Camera Button */}
+          <button
+            onClick={() => initScanner('user')} // Start scanning with the front camera
+            style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
+          >
+            Start with Front Camera
           </button>
         </>
       ) : (
         <div>
-          <div id="qr-reader" style={{ width: '300px', margin: '0 auto' }} />
           <p>Scanning with {facingMode === 'environment' ? 'Back' : 'Front'} Camera...</p>
+
+          {/* Camera Switching Button */}
           {cameraAvailable && (
             <button
               onClick={toggleCamera}
