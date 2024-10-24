@@ -59,12 +59,22 @@ function App() {
   };
 
   // Function to switch between front and back cameras
-  const toggleCamera = () => {
-    stopCameraStream(); // Stop the current camera stream
-    setFacingMode(facingMode === 'environment' ? 'user' : 'environment'); // Toggle between front ('user') and back ('environment') cameras
-
-    // Restart scanning with the new camera after a small delay
-    setTimeout(() => setScanning(true), 500); // Give the camera time to switch
+  const toggleCamera = async () => {
+    try {
+      stopCameraStream(); // Stop the current camera stream
+      const newFacingMode = facingMode === 'environment' ? 'user' : 'environment';
+      setFacingMode(newFacingMode); // Toggle between front ('user') and back ('environment') cameras
+  
+      // Restart scanning with the new camera after a small delay
+      setTimeout(() => {
+        setScanning(true);
+        setQrData(null); // Reset previous QR data
+        setError(null);  // Reset any previous errors
+      }, 500); // Give the camera time to switch
+    } catch (error) {
+      console.error("Error toggling camera:", error);
+      setError("Failed to switch camera.");
+    }
   };
 
   // Check for camera support and handle permission issues
