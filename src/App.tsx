@@ -104,6 +104,7 @@ function App() {
             onScan={handleScan}
             style={{ width: '300px' }}
             facingMode={facingMode} // Pass the facingMode directly to the QrScanner
+            legacyMode={false} // Set this to false for mobile support
           />
           <p>Scanning with {facingMode === 'environment' ? 'Back' : 'Front'} Camera...</p>
           {cameraAvailable && (
