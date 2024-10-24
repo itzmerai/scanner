@@ -40,20 +40,6 @@ function App() {
     setError(null);  
   };
 
-  const getCameraStream = async (desiredFacingMode: 'user' | 'environment') => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: desiredFacingMode }, 
-      });
-      return stream;
-    } catch (err) {
-      console.error('Error accessing camera: ', err);
-      setError('Camera not available.');
-      setCameraAvailable(false);
-      return null;
-    }
-  };
-
   const toggleCamera = () => {
     setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
     setScanning(false); 
