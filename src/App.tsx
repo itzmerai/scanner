@@ -65,20 +65,17 @@ function App() {
 
   // Function to switch between front and back cameras
   const toggleCamera = async () => {
-    if (switchingCamera) return; // Prevent multiple camera switch requests
+    if (switchingCamera) return;
     setSwitchingCamera(true);
 
-    await stopScanner(); // Ensure the current scanner is stopped
+    await stopScanner(); // Stop the scanner completely
+    setFacingMode(facingMode === 'environment' ? 'user' : 'environment'); // Switch camera
 
-    // Toggle between cameras
-    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
+    // Reinitialize the scanner with the new camera without adding timeout delay
+    await initScanner();
+    setSwitchingCamera(false);
+};
 
-    // Restart the scanner with the new camera after a brief delay
-    setTimeout(async () => {
-      await initScanner();
-      setSwitchingCamera(false);
-    }, 500);
-  };
 
   // Check for camera support
   useEffect(() => {
