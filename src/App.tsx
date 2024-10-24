@@ -16,67 +16,65 @@ interface QRData {
 function App() {
   const [qrData, setQrData] = useState<QRData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scanning, setScanning] = useState<boolean>(false); 
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
-  const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
+  const [scanning, setScanning] = useState<boolean>(false); // State to control scanning
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // 'user' = front camera, 'environment' = back camera
+  const [cameraAvailable, setCameraAvailable] = useState<boolean>(true); // Tracks camera availability
+  
+  const qrScannerRef = useRef<any>(null); // Reference to the QrScanner component
 
-  const qrScannerRef = useRef<any>(null);
-
-  // Function to stop the video stream manually
+  // Function to stop the video stream
   const stopCameraStream = () => {
     if (qrScannerRef.current) {
       const videoElem = qrScannerRef.current.videoElement;
       const stream = videoElem?.srcObject as MediaStream;
       if (stream) {
         const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop()); // Stop all tracks
+        tracks.forEach(track => track.stop()); // Stop all tracks to free up the camera
         videoElem.srcObject = null;
       }
     }
   };
 
-  // Handler for successfully scanned QR codes
+  // Function to handle QR code scanning
   const handleScan = (data: QRData | null) => {
     if (data) {
-      setQrData(data); 
-      setScanning(false); 
+      setQrData(data); // Store the scanned QR data
+      setScanning(false); // Stop scanning after a successful scan
     }
   };
 
-  // Handler for QR code scanner errors
+  // Function to handle QR scanner errors
   const handleError = (err: Error | null) => {
     if (err) {
       setError(err.message);
-      setScanning(false);
+      setScanning(false); // Stop scanning if an error occurs
     }
   };
 
-  // Start scanning when user clicks Start
+  // Start the scanning process
   const handleStartScan = () => {
     setScanning(true);
-    setQrData(null); 
-    setError(null);  
+    setQrData(null); // Reset previous QR data
+    setError(null);  // Reset any previous errors
   };
 
-  // Toggle camera function to switch between front and back
+  // Function to switch between front and back cameras
   const toggleCamera = () => {
-    stopCameraStream(); // Stop the current stream
+    stopCameraStream(); // Stop the current camera stream
+    setFacingMode(facingMode === 'environment' ? 'user' : 'environment'); // Toggle between front ('user') and back ('environment') cameras
 
-    // Toggle between 'user' (front) and 'environment' (back) cameras
-    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
-
-    // Restart the scanning process with the new camera after a small delay
-    setTimeout(() => setScanning(true), 500); // Small delay to allow the camera switch
+    // Restart scanning with the new camera after a small delay
+    setTimeout(() => setScanning(true), 500); // Give the camera time to switch
   };
 
-  // Check if the browser supports camera access
+  // Check for camera support and handle permission issues
   useEffect(() => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setError('Camera access not supported in this browser.');
-      setCameraAvailable(false);
+      setCameraAvailable(false); // Disable camera-related functionality if not supported
     }
 
-    // Stop the camera stream on component unmount or when scanning stops
+    // Stop the camera stream when the component unmounts or scanning is stopped
     return () => {
       stopCameraStream();
     };
@@ -100,12 +98,12 @@ function App() {
       ) : (
         <div>
           <QrScanner
-            ref={qrScannerRef} // Attach ref to handle the scanner
+            ref={qrScannerRef} // Reference to handle the scanner instance
             delay={300}
             onError={handleError}
             onScan={handleScan}
             style={{ width: '300px' }}
-            facingMode={facingMode} // Set camera facing mode
+            facingMode={facingMode} // Pass the facingMode directly to the QrScanner
           />
           <p>Scanning with {facingMode === 'environment' ? 'Back' : 'Front'} Camera...</p>
           {cameraAvailable && (
@@ -116,14 +114,14 @@ function App() {
         </div>
       )}
 
-      {/* Render scanned QR code or message */}
+      {/* Display scanned QR data */}
       {qrData && qrData.text ? (
         <p>QR Code Text: {qrData.text}</p>
       ) : (
         <p>No QR Code Scanned</p>
       )}
 
-      {/* Render error message */}
+      {/* Display error message */}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
     </div>
   );
