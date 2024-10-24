@@ -12,17 +12,17 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState<boolean>(false);
   const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
-  const [switchingCamera, setSwitchingCamera] = useState<boolean>(false); // Flag for camera switching
+  const [switchingCamera, setSwitchingCamera] = useState<boolean>(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Camera mode
 
-  const qrScannerRef = useRef<Html5Qrcode | null>(null); // Reference to the scanner instance
-  const qrReaderId = 'qr-reader'; // Define a constant ID for the QR scanner element
+  const qrScannerRef = useRef<Html5Qrcode | null>(null);
+  const qrReaderId = 'qr-reader';
 
   // Function to initialize the QR scanner with the selected camera
   const initScanner = async (selectedFacingMode: 'user' | 'environment') => {
-    setFacingMode(selectedFacingMode); // Set the camera (front or back) based on the selected button
+    setFacingMode(selectedFacingMode); // Set the camera mode
     const config = { fps: 10, qrbox: 250 };
-    const qrScanner = new Html5Qrcode(qrReaderId);
+    const qrScanner = new Html5Qrcode(qrReaderId); // Initialize the QR scanner with the element ID
     qrScannerRef.current = qrScanner;
 
     try {
@@ -60,10 +60,10 @@ function App() {
 
   // Function to switch between front and back cameras during scanning
   const toggleCamera = async () => {
-    if (switchingCamera) return; // Prevent multiple camera switch requests
+    if (switchingCamera) return;
     setSwitchingCamera(true);
 
-    await stopScanner(); // Ensure the current scanner is stopped
+    await stopScanner();
 
     // Toggle between cameras
     const newFacingMode = facingMode === 'environment' ? 'user' : 'environment';
@@ -71,7 +71,7 @@ function App() {
     setSwitchingCamera(false);
   };
 
-  // Check for camera support
+  // Check for camera support and handle browser capabilities
   useEffect(() => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setError('Camera access not supported in this browser.');
@@ -88,14 +88,14 @@ function App() {
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
       <h1>QR Code Scanner</h1>
 
-      {/* Render the QR reader container always */}
-      <div id={qrReaderId} style={{ width: '300px', margin: '0 auto', display: scanning ? 'block' : 'none' }} />
+      {/* Render the QR reader container */}
+      <div id={qrReaderId} style={{ width: '300px', height: '300px', margin: '0 auto' }} />
 
       {!scanning ? (
         <>
           {/* Back Camera Button */}
           <button
-            onClick={() => initScanner('environment')} // Start scanning with the back camera
+            onClick={() => initScanner('environment')}
             style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
           >
             Start with Back Camera
@@ -103,7 +103,7 @@ function App() {
 
           {/* Front Camera Button */}
           <button
-            onClick={() => initScanner('user')} // Start scanning with the front camera
+            onClick={() => initScanner('user')}
             style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
           >
             Start with Front Camera
@@ -118,7 +118,7 @@ function App() {
             <button
               onClick={toggleCamera}
               style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
-              disabled={switchingCamera} // Disable button while switching
+              disabled={switchingCamera}
             >
               {switchingCamera ? 'Switching Camera...' : `Switch to ${facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}`}
             </button>
