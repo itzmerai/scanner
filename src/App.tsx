@@ -13,59 +13,71 @@ function App() {
   const [scanning, setScanning] = useState<boolean>(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
+  const [switchingCamera, setSwitchingCamera] = useState<boolean>(false); // Flag for camera switching
 
   const qrScannerRef = useRef<Html5Qrcode | null>(null); // Reference to the scanner instance
 
   // Function to initialize the QR scanner
-  const initScanner = () => {
+  const initScanner = async () => {
     const config = { fps: 10, qrbox: 250 };
     const qrScanner = new Html5Qrcode('qr-reader');
     qrScannerRef.current = qrScanner;
 
-    qrScanner.start(
-      { facingMode }, 
-      config,
-      qrCodeMessage => {
-        setQrData({ text: qrCodeMessage });
-        stopScanner(); // Stop scanning after successful scan
-      },
-      err => {
-        console.error(`QR Code scan error: ${err}`);
-        setError(`Scan error: ${err}`);
-      }
-    ).catch(err => {
+    try {
+      await qrScanner.start(
+        { facingMode },
+        config,
+        qrCodeMessage => {
+          setQrData({ text: qrCodeMessage });
+          stopScanner(); // Stop scanning after successful scan
+        },
+        err => {
+          console.error(`QR Code scan error: ${err}`);
+          setError(`Scan error: ${err}`);
+        }
+      );
+    } catch (err) {
       console.error(`Failed to start scanning: ${err}`);
       setError(`Failed to start scanning: ${err}`);
-    });
+    }
   };
 
   // Function to stop the scanner
-  const stopScanner = () => {
+  const stopScanner = async () => {
     if (qrScannerRef.current) {
-      qrScannerRef.current.stop().then(() => {
-        qrScannerRef.current?.clear();
+      try {
+        await qrScannerRef.current.stop();
+        qrScannerRef.current.clear();
         setScanning(false);
-      }).catch(err => {
+      } catch (err) {
         console.error(`Failed to stop scanning: ${err}`);
-      });
+      }
     }
   };
 
   // Start the scanning process
-  const handleStartScan = () => {
+  const handleStartScan = async () => {
     setScanning(true);
     setQrData(null);
     setError(null);
-    initScanner(); // Initialize the scanner
+    await initScanner(); // Initialize the scanner
   };
 
   // Function to switch between front and back cameras
-  const toggleCamera = () => {
-    stopScanner(); // Stop the current camera
-    setFacingMode(facingMode === 'environment' ? 'user' : 'environment'); // Toggle between cameras
+  const toggleCamera = async () => {
+    if (switchingCamera) return; // Prevent multiple camera switch requests
+    setSwitchingCamera(true);
 
-    // Reinitialize the scanner after a brief delay to switch camera
-    setTimeout(() => initScanner(), 500);
+    await stopScanner(); // Ensure the current scanner is stopped
+
+    // Toggle between cameras
+    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
+
+    // Restart the scanner with the new camera after a brief delay
+    setTimeout(async () => {
+      await initScanner();
+      setSwitchingCamera(false);
+    }, 500);
   };
 
   // Check for camera support
@@ -83,7 +95,7 @@ function App() {
 
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>QR Code Scanner h5</h1>
+      <h1>QR Code Scanner</h1>
 
       {!scanning ? (
         <>
@@ -91,8 +103,12 @@ function App() {
             Start Scan
           </button>
           {cameraAvailable && (
-            <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
-              Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
+            <button
+              onClick={toggleCamera}
+              style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
+              disabled={switchingCamera} // Disable button while switching
+            >
+              {switchingCamera ? 'Switching Camera...' : `Switch to ${facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}`}
             </button>
           )}
         </>
@@ -101,8 +117,12 @@ function App() {
           <div id="qr-reader" style={{ width: '300px', margin: '0 auto' }} />
           <p>Scanning with {facingMode === 'environment' ? 'Back' : 'Front'} Camera...</p>
           {cameraAvailable && (
-            <button onClick={toggleCamera} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
-              Switch to {facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}
+            <button
+              onClick={toggleCamera}
+              style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
+              disabled={switchingCamera} // Disable button while switching
+            >
+              {switchingCamera ? 'Switching Camera...' : `Switch to ${facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}`}
             </button>
           )}
         </div>
