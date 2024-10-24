@@ -11,7 +11,7 @@ function App() {
   const [qrData, setQrData] = useState<QRData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState<boolean>(false);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Default to 'environment' (back camera)
   const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
   const [switchingCamera, setSwitchingCamera] = useState<boolean>(false); // Flag for camera switching
 
@@ -25,7 +25,7 @@ function App() {
 
     try {
       await qrScanner.start(
-        { facingMode },
+        { facingMode }, // Start with the current facing mode
         config,
         qrCodeMessage => {
           setQrData({ text: qrCodeMessage });
@@ -63,19 +63,20 @@ function App() {
     await initScanner(); // Initialize the scanner
   };
 
-  // Function to switch between front and back cameras
+  // Function to switch between front and back cameras (enabled after scanning starts)
   const toggleCamera = async () => {
-    if (switchingCamera) return;
+    if (switchingCamera) return; // Prevent multiple camera switch requests
     setSwitchingCamera(true);
 
-    await stopScanner(); // Stop the scanner completely
-    setFacingMode(facingMode === 'environment' ? 'user' : 'environment'); // Switch camera
+    await stopScanner(); // Ensure the current scanner is stopped
 
-    // Reinitialize the scanner with the new camera without adding timeout delay
+    // Toggle between cameras
+    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
+
+    // Reinitialize the scanner with the new camera
     await initScanner();
     setSwitchingCamera(false);
-};
-
+  };
 
   // Check for camera support
   useEffect(() => {
@@ -99,15 +100,6 @@ function App() {
           <button onClick={handleStartScan} style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}>
             Start Scan
           </button>
-          {cameraAvailable && (
-            <button
-              onClick={toggleCamera}
-              style={{ padding: '10px 20px', fontSize: '16px', margin: '10px' }}
-              disabled={switchingCamera} // Disable button while switching
-            >
-              {switchingCamera ? 'Switching Camera...' : `Switch to ${facingMode === 'environment' ? 'Front Camera' : 'Back Camera'}`}
-            </button>
-          )}
         </>
       ) : (
         <div>
